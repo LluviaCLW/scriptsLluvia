@@ -10,4 +10,3 @@ sqlmap_sqli_high.sh  适用：LIMIT 1 限制和跳窗+Session分离
 
 sqlmap_sqli_m_auto.sh  
 
-sqlmap_sqli_m_interactive.sh
